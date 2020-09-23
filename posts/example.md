@@ -12,7 +12,7 @@ date: '2020-09-24'
 - twitterリンク
 - google analytics
 
-```
+```go
 func main() {
   fmt.Println("hello world")
 }

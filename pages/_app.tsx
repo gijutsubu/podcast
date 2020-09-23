@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import 'highlight.js/styles/googlecode.css';
 
 import { AppProps } from 'next/app'
 
