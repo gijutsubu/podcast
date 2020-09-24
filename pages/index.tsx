@@ -16,7 +16,7 @@ export const getStaticProps = async () => {
 
 const Home = ({ allPostsData }: { allPostsData: (MatterData & { slug: string })[] }) => {
   return (
-    <Layout home>
+    <Layout home={true}>
       <>
         <section className={utilStyles.headingMd}>
         </section>

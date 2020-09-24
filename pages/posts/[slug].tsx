@@ -6,7 +6,7 @@ import { Date } from '../../components/date'
 
 const Post = ({ postData }: { postData: (MatterData & { slug: string, contentHtml: string }) }) => {
   return (
-    <Layout>
+    <Layout home={false} >
       <>
         <Head>
           <title>{postData.title}</title>
