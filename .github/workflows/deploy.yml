@@ -9,18 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [14.x]
-
     steps:
-    - uses: actions/checkout@v2
-
-    - name: use ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm run deploy
+    - name: checkout
+      uses: actions/checkout@v2
 
     - name: publish
       uses: netlify/actions/cli@master
