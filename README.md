@@ -1,3 +1,5 @@
+[![Actions Status](https://github.com/gijutsubu/podcast/workflows/deploy/badge.svg)](https://github.com/gijutsubu/podcast/actions)
+
 # 技術部
 
 ## <https://stupefied-mayer-7b68e7.netlify.app/>
