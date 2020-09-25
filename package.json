@@ -13,6 +13,7 @@
     "@types/react-dom": "^16.9.8",
     "classnames": "^2.2.6",
     "date-fns": "^2.16.1",
+    "date-fns-tz": "^1.0.10",
     "gray-matter": "^4.0.2",
     "highlight.js": "^10.2.0",
     "next": "9.5.3",
