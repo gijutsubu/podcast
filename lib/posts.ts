@@ -8,9 +8,11 @@ import html from 'remark-html'
 
 const postsDirectory = path.join(process.cwd(), 'posts')
 
-export type MatterData = {
+export type matterData = {
   title: string
   date: string
+  presenters: string[]
+  audiences: string[]
 }
 
 export const getSortedPostsData = () => {
@@ -25,7 +27,7 @@ export const getSortedPostsData = () => {
 
     return {
       slug,
-      ...(matterResult.data as MatterData)
+      ...(matterResult.data as matterData)
     }
   })
 
@@ -38,7 +40,7 @@ export const getSortedPostsData = () => {
   })
 }
 
-export type Params = {
+export type params = {
   slug: string
 }
 

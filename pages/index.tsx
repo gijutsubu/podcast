@@ -1,6 +1,6 @@
 import utilStyles from '../styles/utils.module.css'
 import { Layout } from '../components/layout'
-import { MatterData } from '../lib/posts'
+import { matterData } from '../lib/posts'
 import { getSortedPostsData } from '../lib/posts'
 import Link from 'next/link'
 import { Date } from '../components/date'
@@ -14,7 +14,7 @@ export const getStaticProps = async () => {
   }
 }
 
-const Home = ({ allPostsData }: { allPostsData: (MatterData & { slug: string })[] }) => {
+const Home = ({ allPostsData }: { allPostsData: (matterData & { slug: string })[] }) => {
   return (
     <Layout home={true}>
       <>
@@ -41,4 +41,3 @@ const Home = ({ allPostsData }: { allPostsData: (MatterData & { slug: string })[
 }
 
 export default Home
-

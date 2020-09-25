@@ -1,16 +1,18 @@
 ---
 title: '記事例'
 date: '2020-09-24'
+presenters: ['谷口']
+audiences: ['富本', '奥山']
 ---
 
 # 例
 
 ## todo
 
-- podcast再生の仕組み
-- rssフィード
-- twitterリンク
-- google analytics
+- [x] podcast再生の仕組み
+- [ ] rssフィード
+- [ ] twitterリンク
+- [ ] google analytics
 
 ```go
 func main() {

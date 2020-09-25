@@ -4,15 +4,15 @@ import utilStyles from '../styles/utils.module.css'
 import Link from 'next/link'
 
 const config = {
-  name: '技術部',
-  description: 'ソフトウェアのpodcast',
-  siteTitle: '技術部',
-  ogImage: 'https://avatars2.githubusercontent.com/u/71766187?s=200&v=4',
+  description: process.env.description,
+  siteTitle: process.env.siteTitle,
+  ogImage: process.env.ogImage,
 };
 
 export const Layout = ({ children, home = false }: { children: JSX.Element, home: boolean }) => {
   return <div className={styles.container}>
     <Head>
+      <title>{config.siteTitle} | {config.description}</title>
       <link rel="icon" href="/favicon.ico" />
       <meta
         name="description"
@@ -28,17 +28,20 @@ export const Layout = ({ children, home = false }: { children: JSX.Element, home
     <header className={styles.header}>
       {home ? (
         <>
-          <h1 className={utilStyles.heading2Xl}>{config.name}</h1>
+          <h1 className={utilStyles.heading2Xl}>{config.siteTitle}</h1>
         </>
       ) : (
           <>
             <h1 className={utilStyles.heading2Xl}>
               <Link href="/" >
-                <a className={utilStyles.colorInherit}>{config.name}</a></Link>
+                <a className={utilStyles.colorInherit}>{config.siteTitle}</a></Link>
             </h1>
           </>
         )}
     </header>
-    <main>{children}</main>
-  </div>
+    <main className={utilStyles.main}>{children}</main>
+    <footer className={styles.footer}>
+      &copy; {config.siteTitle}
+    </footer>
+  </div >
 }
