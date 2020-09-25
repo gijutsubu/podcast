@@ -25,7 +25,7 @@ const Home = ({ allPostsData }: { allPostsData: (matterData & { slug: string })[
             {allPostsData.map(({ slug, date, title }) => (
               <li className={utilStyles.listItem} key={slug}>
                 <Link href={`/posts/${slug}`}>
-                  <a>{title}</a>
+                  <a className={utilStyles.colorInherit}>{title}</a>
                 </Link>
                 <br />
                 <small className={utilStyles.lightText}>

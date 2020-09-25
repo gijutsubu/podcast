@@ -34,7 +34,8 @@ export const Layout = ({ children, home = false }: { children: JSX.Element, home
           <>
             <h1 className={utilStyles.heading2Xl}>
               <Link href="/" >
-                <a className={utilStyles.colorInherit}>{config.siteTitle}</a></Link>
+                <a className={utilStyles.colorInherit}>{config.siteTitle}</a>
+              </Link>
             </h1>
           </>
         )}
