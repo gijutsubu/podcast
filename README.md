@@ -49,8 +49,8 @@ audiences: ['中村', '橋本']
 # ローカルで確認
 
 ```bash
-yarn
-yarn dev
+npm install
+npm run dev
 ```
 
 - `localhost:3000`にて確認

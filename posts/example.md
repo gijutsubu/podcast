@@ -16,6 +16,7 @@ audiences: ['中村', '橋本']
 - [ ] rssフィード
 - [ ] twitterリンク
 - [ ] google analytics
+- [ ] spotify
 
 ```go
 func main() {
