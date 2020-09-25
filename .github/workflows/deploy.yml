@@ -22,7 +22,7 @@ jobs:
         run: npm install
 
       - name: deploy
-        run: npm deploy
+        run: npm run deploy
 
       - name: publish
         uses: netlify/actions/cli@master
