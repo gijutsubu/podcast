@@ -46,7 +46,7 @@ audiences: ['中村', '橋本']
 - `presenters`と`audiences`は省略可能
 - `draft: true`だと公開されない
 
-# ローカルで確認
+## ローカルで確認
 
 ```bash
 npm install
