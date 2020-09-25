@@ -1,4 +1,4 @@
-name: seploy
+name: deploy
 
 on:
   push:
