@@ -10,13 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout
-      uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v2
 
-    - name: publish
-      uses: netlify/actions/cli@master
-      with:
-        args: deploy --dir=out --prod
-      env:
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      - name: use node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+
+      - name: install packages
+        run: npm install
+
+      - name: deploy
+        run: npm deploy
+
+      - name: publish
+        uses: netlify/actions/cli@master
+        with:
+          args: deploy --dir=out --prod
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
