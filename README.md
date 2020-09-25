@@ -2,9 +2,7 @@
 
 # 技術部
 
-## <https://stupefied-mayer-7b68e7.netlify.app/>
-
-後にドメインを取得する
+## <https://gijutsubu.com/>
 
 ## 記事の置き場
 
