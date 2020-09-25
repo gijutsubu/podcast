@@ -11,25 +11,30 @@ const postsDirectory = path.join(process.cwd(), 'posts')
 export type matterData = {
   title: string
   date: string
+  draft: boolean
   presenters: string[]
   audiences: string[]
 }
 
+const getPostMetaData = (fileName: string) => {
+  const slug = fileName.replace(/\.md$/, '')
+
+  const fullPath = path.join(postsDirectory, fileName)
+  const fileContents = fs.readFileSync(fullPath, 'utf8')
+
+  const matterResult = matter(fileContents)
+
+  const data = matterResult.data as matterData
+
+  return {
+    slug,
+    ...(data)
+  }
+}
+
 export const getSortedPostsData = () => {
   const fileNames = fs.readdirSync(postsDirectory)
-  const allPostsData = fileNames.map(fileName => {
-    const slug = fileName.replace(/\.md$/, '')
-
-    const fullPath = path.join(postsDirectory, fileName)
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
-
-    const matterResult = matter(fileContents)
-
-    return {
-      slug,
-      ...(matterResult.data as matterData)
-    }
-  })
+  const allPostsData = fileNames.map(getPostMetaData).filter(data => !data.draft)
 
   return allPostsData.sort((a, b) => {
     if (a.date < b.date) {
@@ -46,7 +51,9 @@ export type params = {
 
 export const getAllPostIDs = () => {
   const fileNames = fs.readdirSync(postsDirectory)
-  return fileNames.map(fileName => { return { params: { slug: fileName.replace(/\.md$/, '') } } })
+  return fileNames.map(getPostMetaData).filter(data => !data.draft).map(data => {
+    return { params: { slug: data.slug } }
+  })
 }
 
 export const getPostData = async (slug: string) => {

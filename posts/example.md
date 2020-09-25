@@ -1,8 +1,9 @@
 ---
-title: '記事例'
+title: '記事の例'
 date: '2020-09-24'
-presenters: ['谷口']
-audiences: ['富本', '奥山']
+draft: false
+presenters: ['田中']
+audiences: ['中村', '橋本']
 ---
 
 # 例
