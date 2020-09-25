@@ -10,6 +10,8 @@ audiences: ['富本', '奥山']
 ## todo
 
 - [x] podcast再生の仕組み
+- [x] netlify
+- [x] github action
 - [ ] rssフィード
 - [ ] twitterリンク
 - [ ] google analytics

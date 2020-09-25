@@ -1,0 +1,31 @@
+name: seploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: 14.x
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: use ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm run deploy
+
+    - name: publish
+       uses: netlify/actions/cli@master
+       with:
+         args: deploy --dir=out --prod
+         env:
+           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
