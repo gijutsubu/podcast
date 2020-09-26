@@ -6,6 +6,8 @@ import Document, {
   NextScript
 } from "next/document";
 
+import { existsGaId, googleAnalyticsId } from '../lib/gtag';
+
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
     const initialProps = await Document.getInitialProps(ctx)
@@ -15,7 +17,24 @@ class MyDocument extends Document {
   render() {
     return (
       <Html lang='ja'>
-        <Head />
+        <Head>
+          {existsGaId ? (
+            <>
+              <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`} />
+              <script
+                dangerouslySetInnerHTML={{
+                  __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${googleAnalyticsId}', {
+                    page_path: window.location.pathname,
+                  });`,
+                }}
+              />
+            </>
+          ) : null}
+        </Head>
         <body>
           <Main />
           <NextScript />

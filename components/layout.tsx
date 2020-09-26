@@ -4,9 +4,9 @@ import utilStyles from '../styles/utils.module.css'
 import Link from 'next/link'
 
 const config = {
-  description: process.env.description,
-  siteTitle: process.env.siteTitle,
-  ogImage: process.env.ogImage,
+  description: process.env.DESCRIPTION,
+  siteTitle: process.env.SITE_TITLE,
+  ogImage: process.env.OG_IMAGE,
 };
 
 export const Layout = ({ children, home = false }: { children: JSX.Element, home: boolean }) => {

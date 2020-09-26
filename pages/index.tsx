@@ -27,8 +27,7 @@ const Home = ({ allPostsData }: { allPostsData: (matterData & { slug: string })[
                 <Link href={`/posts/${slug}`}>
                   <a className={utilStyles.colorInherit}>{title}</a>
                 </Link>
-                <br />
-                <small className={utilStyles.lightText}>
+                <small>
                   <Date raw={date} />
                 </small>
               </li>

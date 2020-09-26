@@ -13,13 +13,11 @@ const Post = ({ postData, soundDataPath }: { postData: (matterData & { slug: str
     <Layout home={false} >
       <>
         <Head>
-          <title>{process.env.siteTitle} | {postData.title}</title>
+          <title>{process.env.SITE_TITLE} | {postData.title}</title>
         </Head>
         <article>
           <h1 className={utilStyles.headingXl}>{postData.title}</h1>
-          <div className={utilStyles.lightText}>
-            <Date raw={postData.date} />
-          </div>
+          <Date raw={postData.date} />
           <div className={styles.flex}>
             <div className={styles.people}>
               <People label={'発表者'} people={postData.presenters} />
