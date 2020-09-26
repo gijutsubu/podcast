@@ -1,7 +1,7 @@
 ---
 title: '記事の例'
 date: '2020-09-24'
-draft: false
+draft: true
 presenters: ['田中']
 audiences: ['中村', '橋本']
 ---
