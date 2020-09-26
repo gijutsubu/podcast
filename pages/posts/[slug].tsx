@@ -15,7 +15,7 @@ const Post = ({ postData, soundDataPath }: { postData: (matterData & { slug: str
         <Head>
           <title>{process.env.SITE_TITLE} | {postData.title}</title>
         </Head>
-        <article>
+        <article className={styles.article}>
           <h1 className={utilStyles.headingXl}>{postData.title}</h1>
           <Date raw={postData.date} />
           <div className={styles.flex}>

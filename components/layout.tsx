@@ -14,6 +14,7 @@ export const Layout = ({ children, home = false }: { children: JSX.Element, home
     <Head>
       <title>{config.siteTitle} | {config.description}</title>
       <link rel="icon" href="/favicon.ico" />
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
       <meta
         name="description"
         content={config.description}
