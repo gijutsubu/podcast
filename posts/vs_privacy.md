@@ -313,4 +313,59 @@ ex) https://asp.net/event?article=townblog00123
 
 **suumoの予約予約完了ページ**から、`townblog00123`を値に持つCookieを受け取ることで、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたユーザー** が、suumoの内見予約を行ったことを、ASP `asp.net` は把握することができます。
 
+# Cookieを用いた広告ビジネスに対する規制
 
+これまでに、とあるサイトを訪れたとき、既にブラウザに対して発行されている、**訪れたサイトとは異なるドメインのCookie**を、発行元のドメインに送信することによって、広告ビジネスの仕組みが提供されていることを確認しました。
+
+ex) リタゲ
+  - `na○er.com` に訪れたとき、`criteo.com` から発行されたCookieを、発行元である`criteo.com` に送信する
+
+ex) アフィ
+  - `suumo.jp` に訪れたとき、`asp.net` から発行されたCookieを、発行元である`asp.net` に送信する
+  
+## 3rd-party Cookie とは
+Cookieは、訪れているページと、発行元によって、呼称が異なります。
+
+今回のケースのように、訪れているページとは、異なるドメインから発行されているCookieのことを、第三者というニュアンスを込めて、**3rd-party Cookie** と呼びます。
+
+今回のケースでは、
+
+- `na○er.com` のページを訪れている際、第三者である `criteo.com` から発行されているCookieは、`3rd-party Cookie` となります。
+
+- `suumo.jp` のページを訪れている際、第三者である `asp.net` から発行されているCookieは、`3rd-party Cookie` となります。
+
+どのページを訪れているかによって、ブラウザに発行されているCookieの呼称は変わります。
+
+`suumo.jp` を訪れているときは、`asp.net` から発行されたCookieは`3rd-party Cookie` ですが、`asp.net` を訪れているとき、そのCookieは `3rd-party Cookie` ではありません。
+
+## 3rd-party Cookie に対する規制
+
+近年Safariを始めとして、この **3rd-party Cookieの送信がブロック** されています。
+
+具体的には、
+
+`suumo.jp` に訪れたとき、ブラウザに対して `asp.net` から発行されているCookieを持っていた場合、
+
+そのページ内で  `asp.net` へリクエストを送信しても、そのリクエストヘッダに `asp.net` から発行されているCookieは付与されない
+
+という仕様が各ブラウザにて展開されつつあります。
+
+#### なぜ規制されているか?
+
+背景として、プライバシーの問題があります。
+
+先程、`asp.net` へリクエストを送信するタグを、suumoの内見予約完了ページに配置することで、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたユーザー** が、suumoの内見予約を行ったことを、ASP `asp.net` は把握することができるお話をしました。
+
+では仮に、この `asp.net` へリクエストを送信するタグが、あらゆるページに配置されていたとしましょう。
+
+すると、仮に`asp.net` から発行されたCookieをブラウザが持つ場合、そのブラウザを通じてユーザーが訪れたサイトを、`asp.net` はタグ内のリクエストを通じて全て把握することができます。
+
+> Chrome 3rd-party Cookieの廃止について: https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html
+
+# 1st-party Cookieを用いた広告ビジネス
+
+ここで、各社は1st-party Cookieを用いたビジネスを展開します。
+
+## 1st-party Cookieとは
+
+yet under costruction ...
