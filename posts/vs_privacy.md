@@ -158,16 +158,16 @@ ex) https://~.criteo.com/event?page=suumo_000060837140
 Cookieの基本的な発行方法は、サーバー内で動作しているwebアプリケーションのレスポンスヘッダにCookieを付与することです。
 
 *https://~.criteo.com で接続できるwebアプリケーションのエンドポイントのイメージ*
-  ```js
-  app.get('/event', (req, res) => {
-    res.cookie('visit_identifier', '{リクエストに付与されている、訪れたページ情報}', {
-      maxAge: XXXXX,
-      ...
-    })
-    res.json({})
+```js
+app.get('/event', (req, res) => {
+  res.cookie('visit_identifier', '{リクエストに付与されている、訪れたページ情報}', {
+    maxAge: XXXXX,
+    ...
   })
+  res.json({})
+})
 
-  ```
+```
 
 ---
 
@@ -271,7 +271,7 @@ ASPと呼ばれる、Affiliate Service Provider が、
 
 タウンブログのおかげで、suumoが集客できたというわけです。
 
-suumo側からこのタウンブログに対して、どうにかお礼がしたいものですが、それを判別するには、**最終的にsuumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** が必要です。
+suumo側からこのタウンブログに対して、どうにかお礼がしたいものですが、それを判別するには、**suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** が必要です。
 
 各ASPは、この仕組みを、Cookieを用いて実現しています。
 
@@ -368,4 +368,164 @@ Cookieは、訪れているページと、発行元によって、呼称が異�
 
 ## 1st-party Cookieとは
 
-yet under costruction ...
+さきほど、3rd-party Cookieの定義について記載しました。
+
+> 訪れているページとは、異なるドメインから発行されているCookieのことを、第三者というニュアンスを込めて、**3rd-party Cookie** と呼びます。
+
+この3rd-party Cookieと相対するのが、**1st-party Cookie** です。
+
+1st-party Cookieとは、訪れているサイトのドメインから発行されているCookieです。
+
+ex)
+
+`asp.net` から発行されたCookieは、`asp.net` を訪れているとき、`1st-party Cookie` と呼ばれます。
+
+---
+
+この1st-party Cookieに関しては、送信がブロックされていません。
+
+冒頭の例で、amazon.co.jpを訪れた際、login済みかどうかを判別するCookieを、`amazon.co.jp` ドメインで発行しました。
+
+このCookieは、amazon.co.jp に接続した際に、リクエストヘッダに付与されます。
+
+仮に1st-party Cookieの送信をブロックした場合、ブラウザに発行されているlogin済みかどうかを判別するCookieを、amazon.co.jpに送信できず、login状態をブラウザ上で保持できないという問題が発生します。
+
+
+## 1st-party Cookieを用いたアフィリエイトの仕組み
+
+3rd-party Cookieがブロックされてしまっている場合、
+
+先程登場した **suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** は無効となってしまいます。
+
+現在の主流として、この仕組みを1st-party Cookieを用いて実現しています。
+
+#### Cookieの発行方法について
+
+これまでに紹介したCookieの発行方法は、
+サーバ上で起動しているWebアプリケーションの、レスポンスヘッダにCookieを記載するという方法でした。
+
+この方法で発行されたCookieを **Server-Side Cookie** と呼びます。
+
+*https://~.criteo.com で接続できるwebアプリケーションのエンドポイントのイメージ*
+```js
+app.get('/event', (req, res) => {
+  res.cookie('visit_identifier', '{リクエストに付与されている、訪れたページ情報}', {
+    maxAge: XXXXX,
+    ...
+  })
+  res.json({})
+})
+
+```
+
+---
+
+このServer-Side Cookieと相対するのが、**Client-Side Cookie**です。
+
+**Client-Side Cookie** とは、JavaScriptによって発行されたCookieを指します。
+
+*html上でCookieを発行するscriptタグ*
+
+```html
+
+<script>
+document.cookie = "test1=hello"
+</script>
+
+```
+
+上記のように、JavaScriptを用いて、htmlが配置されたDomainのCookie、いわゆる**1st-party Cookieを操作することができます**。
+
+JavaScriptを用いて、1st-party Cookie 発行にとどまらず、Cookieの値の取得や、Cookieの更新等も行うことができます。
+
+※ このとき、JavaScriptで、そのページから見て **3rd-party Cookie** にあたるCookieの発行・操作はできません。これが可能である場合、あらゆるドメインのCookieに保存されている情報を取得できてしまうからです。
+
+ex) ログイン情報や決済情報など
+
+## Server-Side Cookie を用いたアフィリエイト
+ここで、3rd-party Cookieの代わりに、**Server-Side Cookie** を用いて下記の要件を満たしてみましょう。
+
+要件: *suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する*
+
+#### 1.訪れたサイトを元に、遷移先のリンクをデコレーションする
+
+ASPは、自社のサーバから、suumoの物件 `https://suumo.jp/chintai/jnc_000060837140/` にリダイレクトするリンク `https://asp.net/link_decorator?article=townblog00123` 発行します。
+
+```js
+app.get('/link_decorator', (req, res) => {
+  const article = req.query.article
+  const landing_page_url = `https://suumo.jp/chintai/jnc_000060837140/`
+  res.redirect(landing_page_url+`?from=${article}`)
+})
+```
+
+`asp.net` にて、遷移先の `https://suumo.jp/chintai/jnc_000060837140` のリンクに、どこからこのページにやってきたかを示す情報を付与します。
+
+今回は、`https://town-blog.net/article/00123` からやってきたという情報をリンク上に付与したいので、`from=townblog00123` というクエリを付与して、`https://suumo.jp/chintai/jnc_000060837140/` へリダイレクトします。
+
+ユーザーの行動を把握するために、リンクに情報を付与することを、一般的にリンクデコレーションと呼びます。
+
+#### 2. Client-Side Cookieの発行
+
+
+`https://suumo.jp/chintai/jnc_000060837140?from=townblog00123`に遷移してきました。
+
+このとき、`from` クエリに保存されている、どのページから遷移してきたかという情報を値に持つ、Server-Side Cookieを発行します。
+
+```html
+
+<script>
+const urlParam = location.search.substring(1);
+
+// URLにパラメータが存在する場合
+if(urlParam) {
+  // 「&」が含まれている場合は「&」で分割
+  const param = urlParam.split('&');
+ 
+  // パラメータを格納する用の配列を用意
+  let paramArray = [];
+ 
+  // 用意した配列にパラメータを格納
+  for (i = 0; i < param.length; i++) {
+    let paramItem = param[i].split('=');
+    paramArray[paramItem[0]] = paramItem[1];
+  }
+}
+
+document.cookie = `visit_from=${paramArray.from}`
+</script>
+
+```
+
+これにより、`suumo.jp` ドメインで、どのサイトから来たかという情報を持つ `visit_from` が発行されました。
+
+この  `visit_from` Cookiehの発行元は、`suumo.jp` ドメイン であるため、`suumo.jp`配下のページであれば、JavaScriptで自由に操作することができます。
+
+
+#### 3. Client-Side Cookieの値を取得してASPに送信する
+
+この `suumo.jp` ドメインを発行元とする `visit_from` Cookieには、`suumo.jp`配下であればJavaScriptで操作することが可能です。
+
+ここで、内見予約を完了した際に表示されるページ `https://suumo.jp/chintai/finished_reservation` (仮のURL) 上に、ASP `asp.net` ドメインに対してリクエストを送信するscriptタグを配置します。
+
+```html
+<script>
+
+// cookieを取得して、それをもとにbodyを形成し、requestを送信するscriptを記載 z
+
+</script>
+
+```
+
+上記のscript内では、`visit_from` から `suumo` に接続したユーザーが、どのブログを見ていたかという情報: `townblog00123` を取得し、その情報を `asp.net` に送信しています。
+
+これにより、`asp.net` は *suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する* という要件を達成することができます。
+
+#### まとめ
+
+現在の主流は、これまで説明したように、
+
+1. リンクデコレーションによって、URLにブログの回覧履歴を書き込む
+2. 遷移先で、URLに書き込まれたブログの回覧履歴を、Client-Side Cookieとして遷移先のドメインに保存する
+3. Client-Side Cookie が発行されたドメイン上の、ユーザーが訪れたかどうかを計測したいページで、Client-Side Cookieの値を取得し、それを伴ったリクエストを送信する
+
