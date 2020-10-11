@@ -254,9 +254,63 @@ img_url = myRequest("https://~.criteo.com/retargeting")
 
 ## 成果報酬型広告
 
+いわゆるアフィリエイトというものです。
+
+ASPと呼ばれる、Affiliate Service Provider が、
+このCookieの仕組みを用いて、Affiliateの仕組みを展開しています。
+
+---
+
+住みやすい街を紹介する、タウンブログ `https://town-blog.net` があるとしましょう。
+
+その中で、**〇〇町のおすすめの物件を探すならsuumoが1番!!** という記事`https://town-blog.net/article/00123` があり、その記事を見て、suumoでおすすめの物件を探そうと思いました。
+
+...
+
+タウンブログを見た数日後、実際にsuumoで、〇〇町の物件の内見予約をしました。
+
+タウンブログのおかげで、suumoが集客できたというわけです。
+
+suumo側からこのタウンブログに対して、どうにかお礼がしたいものですが、それを判別するには、**最終的にsuumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** が必要です。
+
+各ASPは、この仕組みを、Cookieを用いて実現しています。
 
 
+## Cookieの発行
+
+タウンブログの、**〇〇町のおすすめの物件を探すならsuumoが1番!!** という記事内には、
+
+**Affiliate Service Provider のエンドポイント `https://asp.net` に対してリクエストを送信するタグ**が設置されています。
+
+また、このとき、このリクエスト内には、タウンブログの、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたという情報** が記載されています。
+
+ex) https://asp.net/event?article=townblog00123
+
+このリクエストのレスポンスとして、`asp.net` からこのブラウザに対して ***「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れた** という情報を持ったCookieが発行されます。
+
+- Cookie名: `visit_article`
+- Cookieの値: `townblog00123`
+- Cookieが発行されたdomain: `asp.net`
+
+## Cookieの送信
+
+さて、ここで、suumoの予約予約完了ページに、`asp.net` へリクエストを送信するタグを設置してみます。
+
+```html
+
+<script>
+    
+  myRequest("https://asp.net/conversion")
+
+</script>
+
+```
+
+この際、ブラウザに発行されているCookie `visit_article` は、Cookieの原則に基づき、上記のリクエストのヘッダに付与され、`asp.net`に Cookieが送信されます。
+
+その際、ASPのエンドポイント `https://asp.net/conversion` では、`townblog00123` を値として持つ、`visit_article`を受け取ることができます。
 
 
+**suumoの予約予約完了ページ**から、`townblog00123`を値に持つCookieを受け取ることで、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたユーザー** が、suumoの内見予約を行ったことを、ASP `asp.net` は把握することができます。
 
-TODO safariとChromeで、右上の広告枠が違うことを確認してみましょう。
+
