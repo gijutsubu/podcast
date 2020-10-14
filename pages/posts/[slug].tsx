@@ -14,6 +14,10 @@ const Post = ({ postData, soundDataPath }: { postData: (matterData & { slug: str
       <>
         <Head>
           <title>{process.env.SITE_TITLE} | {postData.title}</title>
+          <meta name="twitter:card" content="summary" />
+          <meta name="twitter:site" content={process.env.TWITTER_ID} />
+          <meta name="twitter:title" content={process.env.SITE_TITLE} />
+          <meta name="twitter:description" content={twitterCardTitle(postData.title, postData.presenters, postData.audiences)} />
         </Head>
         <article className={styles.article}>
           <h1 className={utilStyles.headingXl}>{postData.title}</h1>
@@ -59,3 +63,13 @@ export const getStaticProps = async ({ params }: { params: params }) => {
   }
 }
 
+
+const twitterCardTitle = (title: string, presenters: string[], audiences: string[]) => {
+  return title + (
+    presenters.length !== 0 || audiences.length !== 0 ? ' |' : ''
+  ) + (
+      presenters.length !== 0 ? ' 発表者: ' + presenters : ''
+    ) + (
+      audiences.length !== 0 ? ' 聴講者: ' + audiences : ''
+    );
+}

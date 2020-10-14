@@ -25,6 +25,8 @@ export const Layout = ({ children, home = false }: { children: JSX.Element, home
       />
       <meta name="og:title" content={config.siteTitle} />
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content={process.env.TWITTER_ID} />
+      <meta name="twitter:title" content={process.env.SITE_TITLE} />
     </Head>
     <header className={styles.header}>
       {home ? (
