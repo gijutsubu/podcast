@@ -1,531 +1,428 @@
 ---
-title: '3rd-party Cookieを巡る環境の変遷'
-date: '2020-09-24'
-presenters: ['富本']
-audiences: ['谷口']
+title: "3rd-party Cookieを巡る環境の変遷"
+date: "2020-09-24"
+presenters: ["富本"]
+audiences: ["谷口", "奥山"]
 draft: true
 ---
 
 # はじめに
-とあるアドテクに務める富本が、技術部の二人に `3rd-party Cookie` を巡るアドテク界隈のてんやわんやについてお伝えします。
 
-## そもそもCookieって何?
+とあるアドテクに務める富本が、技術部の二人に `Cookie`の基礎知識(この doc)と、Cookie 周りのアドテク界隈のてんやわんや(podcast 上)についてお伝えします。
 
-N○Tさんの言葉をお借りすると、Cookieとは、
+# そもそも Cookie って何?
 
-**Webサイト（Webサーバ）側がWebブラウザを通じてアクセスしてきたパソコンやスマホにユーザを識別するためのIDや閲覧履歴などの情報を書き込み、一時的に保存する仕組みです。**
-> https://www.ntt.com/personal/ocn-security/case/column/20200116.html
+NTT さんの言葉をお借りすると、Cookie とは、
 
-ざっくりCookieの目的がわかったところで、この目的がどのようにして達成されているか、実際にCookieが用いられているサイトを触りながら確認してみましょう。
+**Web サイト（Web サーバ）側が Web ブラウザを通じてアクセスしてきたパソコンやスマホにユーザを識別するための ID や閲覧履歴などの情報を書き込み、一時的に保存する仕組み** のことです。
 
-## Cookieの仕組み
+> NTT さんの言葉: https://www.ntt.com/personal/ocn-security/case/column/20200116.html
 
-ここで、○mazonを開いてみましょう。
+もう少し柔らかい表現で Cookie を表現するとすれば、**Web 上の `足跡`** と表せるかと思います。
+
+Cookie の仕組みを通じて、**Web アプリケーションは、ユーザーがどのページで、何を行なってきたのかを、大まかに把握することができます。**
+
+簡単に Cookie の概念がわかったところで、
+
+具体的にこの仕組みが、どのようにして達成されているか、実際に Cookie が用いられているサイトを触りながら確認してみましょう。
+
+## Cookie が用いられているサイト
+
+ここで、Amazon を開いてみましょう。
 
 > https://www.amazon.co.jp/
 
 このとき、
 
-  - login画面を表示される人
-  - login画面を表示されない人
-  
+- login 画面を表示される人
+
+- login 画面を表示されない人
+
 がいるかと思います。
+
+---
 
 このことから、
 
-**`https://www.amazon.co.jp/` は、なんらかの仕組みを用いて、ユーザーが未ログインかlogin済みか判断し、login画面のレンダリングを切り替えている**
+`https://www.amazon.co.jp/` では、なんらかの仕組みを用いて、
 
-ことがわかります。
+**ユーザーが未ログインか login 済みか判断し、login 画面を切り替える**
 
-このなんらかの仕組みというものが、Cookieを用いた仕組みのことです。
+仕様になっていることがわかります。
 
-この仕組みは大まかに、
+この「なんらかの仕組み」 は、**Cookie** を用いて達成されています。
 
-1. Cookieの発行
-2. Cookieの送信
+では、具体的に、この仕組みを実現するために、Cookie はどのように用いられているのでしょうか?
 
-によって成り立っています。
+## Cookie を用いて login 済みかどうか識別する仕組みとは
 
-#### Cookieの発行
+具体的な結論からいうと、
 
-要件: *ユーザーが未ログインかlogin済みか判断し、login画面のレンダリングを切り替えている* 
+**要件**: _ユーザーが未ログインか login 済みか判断し、login 画面のレンダリングを切り替える_
 
-上記の要件を満たすために、○mazonでは
+という要件を満たすための仕組みは、主に 2 つのステップによって構成されています。
 
-1. **loginしたかどうかを判別するための識別子を発行する**
+1. `https://www.amazon.co.jp/` では ログインに成功した際、_login したかどうかを判別するための識別子_ をブラウザに発行する。
 
-する必要がありそうです。
+2. `https://www.amazon.co.jp/` に接続した際、ブラウザが _login したかどうかを判別するための識別子_ を持っていれば、login 済の画面をレンダリングする。
 
-この識別子が Cookie です。
+この
 
-デベロッパーツールを確認すると、 `https://www.amazon.co.jp/` では、login処理が行われたあと、loginしたことを証明するいくつかのCookieをブラウザに発行していることがわかります。
+_login したかどうかを判別するための識別子_
 
-TODO: 画像
+こそが
 
-(試しにこれらのCookieを削除してから、再度ブラウザをreloadしてみてください。すると、login画面が再度表示されます。)
+**Cookie** です。
 
-さて、実際にCookieが○mazonから発行されているのを確認できました。
+以下では、それぞれの方法をより具体的に確認していきましょう。
 
-現在ブラウザは、`既にログインしていることを証明するCookie` を付与されています。
+## 仕組み ①: Cookie の発行
 
-では、`https://www.amazon.co.jp/` このCookieを用いて、loginを識別しているのでしょうか??
+まず、ステップ `1`
 
-#### Cookieの送信
+> 1. `https://www.amazon.co.jp/` では ログインに成功した際、_login したかどうかを判別するための識別子_ をブラウザに発行する。
 
-結論から言うと、
+において、`https://www.amazon.co.jp/`が、ブラウザに対してどのように Cookie を発行しているかを確認してみましょう。
 
-1. `https://www.amazon.co.jp/` にリクエストを送信した際に、先程 *ブラウザに対して発行されたログインの有無を確認するCookie* も一緒に `https://www.amazon.co.jp/` へ送信されます。
+---
 
-TODO: 画像
+デベロッパーツールを確認すると、 `https://www.amazon.co.jp/` では、login 処理が行われたあと、login したことを証明するいくつかの Cookie をブラウザに発行していることがわかります。
 
-`https://www.amazon.co.jp/` は、リクエストヘッダ内に、*ブラウザに対して発行されたログインの有無を確認するCookie* があるかどうかを確認し、そのCookieの有無によって、返却するhtmlを切り替えています。
+試しに、これらの Cookie を削除してから、再度ブラウザを reload してみてください。すると、未 login 画面が表示されます。
 
+では、Cookie は、どのように Amazon から発行されているのでしょうか?
 
-このCookieの送信には、ある原則があります。
+### どのように ブラウザに対して Cookie が発行されているのか？
 
-#### Cookieの原則
+Cookie をブラウザに対して発行する方法は主に 2 つあります。
 
-Cookieは、発行された時点で、そのCookie自身に、自身の発行元であるdomainを記憶しています。
+#### 方法 1. Web アプリケーションのレスポンスヘッダに Cookie を付与して、ブラウザに発行する
 
-TODO: 画像
+1 つ目の方法は、Web アプリケーションのレスポンスヘッダに Cookie を付与して、ブラウザに発行する方法です。
+
+`Set-Cookie` ヘッダを付与することで、ブラウザに対して Cookie が付与されます。
+
+> Set-Cookie: https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Set-Cookie
+
+_Cookie を発行するエンドポイントの例: Express フレームワークの場合_
+
+```js
+app.get('/login', (request, response) => {
+   ...
+
+   // Cookieをレスポンスヘッダにセットする
+   response.cookie('success_login', 'Success login at ...', {
+
+      // Cookieに属性を付与する
+      maxAge: XXXXX,
+      ...
+
+   })
+   ...
+})
+
+```
+
+Amazon の場合も、この方法で、ログインが完了した際、ブラウザに対して `既にログインしていることを証明するCookie` を発行しています。
+
+下記が、Amazon において、その役割を果たしているエンドポイントだと思われます。
+
+> ユーザー名とパスワードを受け付け、そのレスポンスとして Cookie を発行するエンドポイント: `https://www.amazon.co.jp/ap/signin`
+
+このように、Web アプリケーション内の HTTP ヘッダに `Set-Cookie` を用いて付与される Cookie を
+
+一般的に **Server-Side Cookie** と呼びます。
+
+---
+
+#### 方法 2. ブラウザ上で、JavaScript を用いて、ブラウザに発行する
+
+この Server-Side Cookie と相対するのが、**Client-Side Cookie**です。
+
+**Client-Side Cookie** とは、Web ページ上で、 JavaScript によって発行された Cookie のことを指します。
+
+_ページ上で Cookie を発行する script タグ_
+
+```html
+<script>
+  document.cookie = "success_login=Success login at ...";
+</script>
+```
+
+上記のように、JavaScript を用いることでも、Cookie を発行することができます。
+
+---
+
+さて、これまでに、
+
+**要件**: _ユーザーが未ログインか login 済みか判断し、login 画面のレンダリングを切り替える_
+
+という要件を満たすための 2 つのステップのうち、
+
+1. `https://www.amazon.co.jp/` では ログインに成功した際、_login したかどうかを判別するための識別子_ をブラウザに発行する。
+
+というステップについて、Cookie の発行方法を交えて、具体的に紹介しました。
+
+現在ブラウザは、これらの方法によって、
+
+`既にログインしていることを証明するCookie`
+
+を付与されています。
+
+続いて、要件を満たす 2 つのステップのうち、
+
+2. `https://www.amazon.co.jp/` に接続した際、ブラウザが _login したかどうかを判別するための識別子_ を持っていれば、login 済の画面をレンダリングする。
+
+というステップについても、具体的に確認していきましょう。
+
+## 仕組み ②: Cookie の送信
+
+現在、 _login したかどうかを判別するための識別子_ としての Cookie がブラウザに付与されています。
+
+この Cookie は、
+
+**要件**: _ユーザーが未ログインか login 済みか判断し、login 画面のレンダリングを切り替える_
+
+という要件を満たすための 2 つのステップのうち、2 つ目のステップ
+
+2. `https://www.amazon.co.jp/` に接続した際、ブラウザが _login したかどうかを判別するための識別子_ を持っていれば、login 済の画面をレンダリングする。
+
+で利用されます。
+
+では、この Cookie は、どのように `https://www.amazon.co.jp/` で利用されるのでしょうか?
+
+### どのように ブラウザに発行された Cookie は利用されているのか?
+
+Cookie の利用は、Cookie の性質に基づいて行われています。
+
+#### Cookie の性質とは
+
+**[Cookie の性質 1]**
+
+基本的に、Cookie は、**発行された時点で、その Cookie 自身に、自身の発行元である domain を記憶** しています。
+
+---
+
+**[Cookie の性質 2]**
 
 **ブラウザがリクエストを行う際、**
 
 ex) `https://www.amazon.co.jp/` を開く等
 
-**ブラウザ上に発行されているCookieは、Cookie自身に記録された発行元ドメインを確認し、**
+**ブラウザ上に発行されている Cookie は、Cookie 自身に記録された発行元ドメインを確認し、**
 
-ex) TODO: 画像
-
-**そのドメインがリクエスト先のドメインと一致していた場合**
-
-ex) TODO: 画像
-
-**そのリクエストのヘッダーに付与** されます。
-
-ex) TODO: 画像
-
-さて、この知識を抑えてからが本題です。
-
-# Cookieを用いた広告ビジネス
-
-さて、本題ですが、
-
-**ブラウザがリクエストを行う際、**
-
-**ブラウザ上に発行されているCookieは、Cookie自身に記録された発行元ドメインを確認し、**
-
-**そのドメインがリクエスト先のドメインと一致していた場合**
-
-**そのリクエストのヘッダーに付与** 
-
-されるというCookieの原則を用いて、いくつかの広告ビジネスが展開されていました。
-
-## リターゲティング広告
-
-一度見た広告が、別ページでも何度も表示されることありますよね?
-これがリターゲティング広告と言われるものです。
-
-#### リターゲティング広告の仕組み
-
-筆者は物件の間取りを見るのが趣味なので、よくsuumoを開きます。
-
-例えば、こちらのページを回覧したとします。
-> https://suumo.jp/chintai/jnc_000060837140/
-
-するとネットサーフィン中、様々なページで、先程見た物件が表示されるというというものです。
-
-このリターゲティング広告の仕組みは、`creteo社` 等から提供されています。
-> criteo: https://www.gyro-n.com/dfm/criteo/#about-criteo
-
-
-### Cookieを用いて簡単にリターゲティング広告を説明すると...
-
-#### Cookieの発行
-
-suumoのhtml内には、
-
-**criteo社のエンドポイントに対してリクエストを送信するタグ**が設置されています。
-
-また、このとき、このリクエスト内には、**suumoの `000060837140` の物件が掲載されたページを訪れたという情報**が記載されています。
-
-ex) https://~.criteo.com/event?page=suumo_000060837140
-
-このリクエストのレスポンスとして、`criteo.com` からこのブラウザに対して **このユーザーはsuumoの000060837140の物件を見てます** という情報を持ったCookieが発行(※1)されます。
-
-**補足 ※1**
-
-Cookieの基本的な発行方法は、サーバー内で動作しているwebアプリケーションのレスポンスヘッダにCookieを付与することです。
-
-*https://~.criteo.com で接続できるwebアプリケーションのエンドポイントのイメージ*
-```js
-app.get('/event', (req, res) => {
-  res.cookie('visit_identifier', '{リクエストに付与されている、訪れたページ情報}', {
-    maxAge: XXXXX,
-    ...
-  })
-  res.json({})
-})
-
-```
+**そのドメインがリクエスト先のドメインと一致していた場合、そのリクエストのヘッダーに付与** されます。
 
 ---
 
-これにより、suumoのページを訪れたことで、下記のようなCookieがブラウザに発行されます。
+_既にログインしていることを証明する Cookie_ は、 Amazon からブラウザに発行された時点で、自身に発行元ドメインである、 `www.amazon.co.jp` を記憶しています。
 
-- Cookie名: `visit_identifier`
-- Cookieの値: `suumo_000060837140`
-- Cookieが発行されたdomain: `~.criteo.com`
+この Cookie をブラウザが保持したまま、`https://www.amazon.co.jp/` にリクエストを送信した際、その Cookie は `https://www.amazon.co.jp/` へ送信されます。
+`https://www.amazon.co.jp/` では、受け取ったリクエストヘッダ内に、_既にログインしていることを証明する Cookie_ があるかどうかを確認し、その Cookie の有無によって、返却する html を切り替えているのです。
 
-#### Cookieの送信
+これにより、
 
-では、この発行されたCookieはどのように用いられるのでしょうか??
+**要件**: _ユーザーが未ログインか login 済みか判断し、login 画面のレンダリングを切り替える_
 
-現在ブラウザは `~.criteo.com` から発行された、`visit_identifier` 名のCookieを持っています。
+という要件を満たすための 2 つのステップのうち、2 つ目のステップ
 
-この `visit_identifier` Cookieの値には、ユーザーが訪れたページ`suumo_000060837140` が記載され、発行元のdomainには、`~.criteo.com` が記載されています。
+2. `https://www.amazon.co.jp/` に接続した際、ブラウザが _login したかどうかを判別するための識別子_ を持っていれば、login 済の画面をレンダリングする。
 
-ここで、まとめサイト `https://na○er.com` を訪れたとします。
-このページ内には、下記のようなtagが設置されることで、リターゲティング広告が成立しています。
-
-```html
-
-<img id="retargeting_img">
-
-...
-
-<script>
-  const image = document.getElementById("retargeting_img");
-  
-  img_url = myRequest("https://~.criteo.com/retargeting")
-  
-  /* 以降imageタグに対して、criteoから取得したurlを指定する */
-  
-  ...
-
-</script>
-```
-
-ここで先程の原則を思い出してください。
-
-
-```
-ブラウザがリクエストを行う際、
-
-ブラウザ上に発行されているCookieは、Cookie自身に記録された発行元ドメインを確認し、
-
-そのドメインがリクエスト先のドメインと一致していた場合
-
-そのリクエストのヘッダーに付与される
-```
-
-`https://na○er.com` 内に設置されたscriptタグ内では、`criteo.com` に対してリクエストが送信されています。
-
-
-```js
-img_url = myRequest("https://~.criteo.com/retargeting")
-```
-
-このとき、Cookieの原則に従い、このリクエストに際し、先程発行されたCookie: `visit_identifier` が、リクエストヘッダに付与されます。
-
-`https://~.criteo.com/retargeting` では、このリクエストヘッダの
-`visit_identifier` Cookieに付与された `suumo_000060837140` に基づいて、返却するimg urlを変更しています。
-
-*https://~.criteo.com/retargeting で接続できるwebアプリケーションのエンドポイントのイメージ*
-  ```js
-  app.get('/retargeting', (req, res) => {
-    
-    const json = res.json(req.cookies)
-
-    if (json.visit_identifier == "suumo_000060837140") {
-        const img_url = "https://suumo.jp/chintai/jnc_000060837140.img"
-    } 
-
-    ...
-
-    res.json({
-      "img_url":  
-    })
-  })
-
-  ```
-
-他にもCookieを活かした広告ビジネスは存在します。
-
-## 成果報酬型広告
-
-いわゆるアフィリエイトというものです。
-
-ASPと呼ばれる、Affiliate Service Provider が、
-このCookieの仕組みを用いて、Affiliateの仕組みを展開しています。
+を達成しています。
 
 ---
 
-住みやすい街を紹介する、タウンブログ `https://town-blog.net` があるとしましょう。
+さて、これまでに Cookie が用いられているケースを通じて、Cookie の下記の性質について触れました。
 
-その中で、**〇〇町のおすすめの物件を探すならsuumoが1番!!** という記事`https://town-blog.net/article/00123` があり、その記事を見て、suumoでおすすめの物件を探そうと思いました。
+- 基本的に、Cookie は、_発行された時点で、その Cookie 自身に、自身の発行元である domain を記憶_ しています。
+- ブラウザがリクエストを行う際、_ブラウザ上に発行されている Cookie は、Cookie 自身に記録された発行元ドメインを確認し、そのドメインがリクエスト先のドメインと一致していた場合そのリクエストのヘッダーに付与_ されます。
 
-...
+以降の Tutorials では、この性質を理解しておけば、理解がスムーズになるでしょう。
 
-タウンブログを見た数日後、実際にsuumoで、〇〇町の物件の内見予約をしました。
+# `1st-Party Cookie` と `3rd-Party Cookie` について
 
-タウンブログのおかげで、suumoが集客できたというわけです。
+先程紹介した login 機能を筆頭に、ネットビジネスを構成する上では、Cookie の存在は欠かせないものとなっています。
 
-suumo側からこのタウンブログに対して、どうにかお礼がしたいものですが、それを判別するには、**suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** が必要です。
+特に、ネット広告ビジネスにおいて、Cookie はとても重要な役割を果たしています。
 
-各ASPは、この仕組みを、Cookieを用いて実現しています。
+中でも、Cookie の中で、`3rd-Party Cookie` 及び `1st-Party Cookie` と呼ばれる Cookie は、ネット広告を知る上では欠かせません。
 
+以降、これらの Cookie について、解説していきます。
 
-## Cookieの発行
+# 3rd-Party Cookie と 1st-Party Cookie とは?
 
-タウンブログの、**〇〇町のおすすめの物件を探すならsuumoが1番!!** という記事内には、
+はじめに、結論から抑えておきましょう。
 
-**Affiliate Service Provider のエンドポイント `https://asp.net` に対してリクエストを送信するタグ**が設置されています。
+**Cookie は、訪れているページのドメインと、Cookie の発行元のドメインによって、呼称が異なります。**
 
-また、このとき、このリクエスト内には、タウンブログの、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたという情報** が記載されています。
+このとき、
 
-ex) https://asp.net/event?article=townblog00123
+- 訪れているサイトのドメインと、異なるドメインから発行されている Cookie を、**3rd-Party Cookie**
+- 訪れているサイトのドメインと、等しいドメインから発行されている Cookie を、**1st-Party Cookie**
 
-このリクエストのレスポンスとして、`asp.net` からこのブラウザに対して ***「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れた** という情報を持ったCookieが発行されます。
+と呼びます。
 
-- Cookie名: `visit_article`
-- Cookieの値: `townblog00123`
-- Cookieが発行されたdomain: `asp.net`
+なぜ `3rd` なのかについてですが、訪れているページとは、異なるドメインから発行されているという点において、第三者というニュアンスを込めて、**3rd-party Cookie** と呼ばれています。
 
-## Cookieの送信
-
-さて、ここで、suumoの予約予約完了ページに、`asp.net` へリクエストを送信するタグを設置してみます。
-
-```html
-
-<script>
-    
-  myRequest("https://asp.net/conversion")
-
-</script>
-
-```
-
-この際、ブラウザに発行されているCookie `visit_article` は、Cookieの原則に基づき、上記のリクエストのヘッダに付与され、`asp.net`に Cookieが送信されます。
-
-その際、ASPのエンドポイント `https://asp.net/conversion` では、`townblog00123` を値として持つ、`visit_article`を受け取ることができます。
-
-
-**suumoの予約予約完了ページ**から、`townblog00123`を値に持つCookieを受け取ることで、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたユーザー** が、suumoの内見予約を行ったことを、ASP `asp.net` は把握することができます。
-
-# Cookieを用いた広告ビジネスに対する規制
-
-これまでに、とあるサイトを訪れたとき、既にブラウザに対して発行されている、**訪れたサイトとは異なるドメインのCookie**を、発行元のドメインに送信することによって、広告ビジネスの仕組みが提供されていることを確認しました。
-
-ex) リタゲ
-  - `na○er.com` に訪れたとき、`criteo.com` から発行されたCookieを、発行元である`criteo.com` に送信する
-
-ex) アフィ
-  - `suumo.jp` に訪れたとき、`asp.net` から発行されたCookieを、発行元である`asp.net` に送信する
-  
-## 3rd-party Cookie とは
-Cookieは、訪れているページと、発行元によって、呼称が異なります。
-
-今回のケースのように、訪れているページとは、異なるドメインから発行されているCookieのことを、第三者というニュアンスを込めて、**3rd-party Cookie** と呼びます。
-
-今回のケースでは、
-
-- `na○er.com` のページを訪れている際、第三者である `criteo.com` から発行されているCookieは、`3rd-party Cookie` となります。
-
-- `suumo.jp` のページを訪れている際、第三者である `asp.net` から発行されているCookieは、`3rd-party Cookie` となります。
-
-どのページを訪れているかによって、ブラウザに発行されているCookieの呼称は変わります。
-
-`suumo.jp` を訪れているときは、`asp.net` から発行されたCookieは`3rd-party Cookie` ですが、`asp.net` を訪れているとき、そのCookieは `3rd-party Cookie` ではありません。
-
-## 3rd-party Cookie に対する規制
-
-近年Safariを始めとして、この **3rd-party Cookieの送信がブロック** されています。
-
-具体的には、
-
-`suumo.jp` に訪れたとき、ブラウザに対して `asp.net` から発行されているCookieを持っていた場合、
-
-そのページ内で  `asp.net` へリクエストを送信しても、そのリクエストヘッダに `asp.net` から発行されているCookieは付与されない
-
-という仕様が各ブラウザにて展開されつつあります。
-
-#### なぜ規制されているか?
-
-背景として、プライバシーの問題があります。
-
-先程、`asp.net` へリクエストを送信するタグを、suumoの内見予約完了ページに配置することで、**「〇〇町のおすすめの物件を探すならsuumoが1番!!」の記事を訪れたユーザー** が、suumoの内見予約を行ったことを、ASP `asp.net` は把握することができるお話をしました。
-
-では仮に、この `asp.net` へリクエストを送信するタグが、あらゆるページに配置されていたとしましょう。
-
-すると、仮に`asp.net` から発行されたCookieをブラウザが持つ場合、そのブラウザを通じてユーザーが訪れたサイトを、`asp.net` はタグ内のリクエストを通じて全て把握することができます。
-
-> Chrome 3rd-party Cookieの廃止について: https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html
-
-# 1st-party Cookieを用いた広告ビジネス
-
-ここで、各社は1st-party Cookieを用いたビジネスを展開します。
-
-## 1st-party Cookieとは
-
-さきほど、3rd-party Cookieの定義について記載しました。
-
-> 訪れているページとは、異なるドメインから発行されているCookieのことを、第三者というニュアンスを込めて、**3rd-party Cookie** と呼びます。
-
-この3rd-party Cookieと相対するのが、**1st-party Cookie** です。
-
-1st-party Cookieとは、訪れているサイトのドメインから発行されているCookieです。
-
-ex)
-
-`asp.net` から発行されたCookieは、`asp.net` を訪れているとき、`1st-party Cookie` と呼ばれます。
+| 訪れているページのドメイン | `example.com` から発行されている Cookie | `tracker.net` から発行されている Cookie |
+| -------------------------- | --------------------------------------- | --------------------------------------- |
+| `example.com`              | **1st**-Party Cookie                    | **3rd**-Party Cookie                    |
+| `tracker.net`              | **3rd**-Party Cookie                    | **1st**-Party Cookie                    |
 
 ---
 
-この1st-party Cookieに関しては、送信がブロックされていません。
+仮に、ブラウザが `example.com` から発行されている Cookie と、`tracker.net` から発行されている Cookie を持っているケースを考えてみましょう。
 
-冒頭の例で、amazon.co.jpを訪れた際、login済みかどうかを判別するCookieを、`amazon.co.jp` ドメインで発行しました。
+そのブラウザで、とある Web ページ `https://example.com/index.html` に接続してみます。
 
-このCookieは、amazon.co.jp に接続した際に、リクエストヘッダに付与されます。
+_index.html_
 
-仮に1st-party Cookieの送信をブロックした場合、ブラウザに発行されているlogin済みかどうかを判別するCookieを、amazon.co.jpに送信できず、login状態をブラウザ上で保持できないという問題が発生します。
-
-
-## 1st-party Cookieを用いたアフィリエイトの仕組み
-
-3rd-party Cookieがブロックされてしまっている場合、
-
-先程登場した **suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する仕組み** は無効となってしまいます。
-
-現在の主流として、この仕組みを1st-party Cookieを用いて実現しています。
-
-#### Cookieの発行方法について
-
-これまでに紹介したCookieの発行方法は、
-サーバ上で起動しているWebアプリケーションの、レスポンスヘッダにCookieを記載するという方法でした。
-
-この方法で発行されたCookieを **Server-Side Cookie** と呼びます。
-
-*https://~.criteo.com で接続できるwebアプリケーションのエンドポイントのイメージ*
-```js
-app.get('/event', (req, res) => {
-  res.cookie('visit_identifier', '{リクエストに付与されている、訪れたページ情報}', {
-    maxAge: XXXXX,
-    ...
-  })
-  res.json({})
-})
-
+```html
+<!DOCTYPE html>
+<html lang="ja">
+  <body>
+    <p>ようこそ example.com へ!</p>
+    <img src="https://tracker.net/test.jpg" />
+  </body>
+</html>
 ```
+
+このケースだと、
+
+訪れているページのドメインが `example.com` であるため、
+
+- `example.com` から発行されている Cookie => **1st**-Party Cookie
+- `tracker.net` から発行されている Cookie => **3rd**-Party Cookie
+
+となります。
+
+## 3rd-Party Cookie と 1st-Party Cookie の送信について
+
+さて、ここで、`https://example.com/index.html` に接続したとき、
+
+ブラウザからは、2 つのリクエストが送信されています。
+
+1. `https://example.com/index.html` のページを要求するリクエスト
+2. `https://example.com/index.html` のページ内で、img ソースを `https://tracker.net/test.jpg` に対するリクエスト
 
 ---
 
-このServer-Side Cookieと相対するのが、**Client-Side Cookie**です。
+ここで、Cookie の性質を思い出してください。
 
-**Client-Side Cookie** とは、JavaScriptによって発行されたCookieを指します。
+- ブラウザがリクエストを行う際、_ブラウザ上に発行されている Cookie は、Cookie 自身に記録された発行元ドメインを確認し、そのドメインがリクエスト先のドメインと一致していた場合そのリクエストのヘッダーに付与_ されます。
 
-*html上でCookieを発行するscriptタグ*
+この性質に基づき、もともとブラウザに付与されている Cookie
 
-```html
+- `example.com` から発行されている Cookie => **1st**-Party Cookie
+- `tracker.net` から発行されている Cookie => **3rd**-Party Cookie
 
-<script>
-document.cookie = "test1=hello"
-</script>
+は、発行されたドメイン別に、それぞれのリクエストヘッダに付与され、
 
-```
+1. `https://example.com/index.html` のページを要求するリクエスト + `example.com` から発行されている Cookie
+2. `https://tracker.net/test.jpg` へ img を要求するリクエスト + `tracker.net` から発行されている Cookie
 
-上記のように、JavaScriptを用いて、htmlが配置されたDomainのCookie、いわゆる**1st-party Cookieを操作することができます**。
+各サーバに送信されます。
 
-JavaScriptを用いて、1st-party Cookie 発行にとどまらず、Cookieの値の取得や、Cookieの更新等も行うことができます。
+このとき、`2` のケースでは、`https://example.com/index.html` 内で、第三者のドメインである `tracker.net` に対してリクエストを送信しており、そのリクエストヘッダに `tracker.net` から発行されている Cookie、いわゆる **3rd**-Party Cookie が付与されていることを認識しておいてください。
 
-※ このとき、JavaScriptで、そのページから見て **3rd-party Cookie** にあたるCookieの発行・操作はできません。これが可能である場合、あらゆるドメインのCookieに保存されている情報を取得できてしまうからです。
+# Cookie の呼称について
 
-ex) ログイン情報や決済情報など
+さて、ここまでに
 
-## Server-Side Cookie を用いたアフィリエイト
-ここで、3rd-party Cookieの代わりに、**Server-Side Cookie** を用いて下記の要件を満たしてみましょう。
+- Cookie の発行と送信の仕組み
+- Client-Side Cookie と Server-Side Cookie の違い
+- 3rd-Party Cookie と 1st-Party Cookie の違い
 
-要件: *suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する*
+について扱いました。
 
-#### 1.訪れたサイトを元に、遷移先のリンクをデコレーションする
+ここまでに様々な Cookie の呼称が出てきたので、一旦これまでに登場した呼称をまとめてみましょう。
 
-ASPは、自社のサーバから、suumoの物件 `https://suumo.jp/chintai/jnc_000060837140/` にリダイレクトするリンク `https://asp.net/link_decorator?article=townblog00123` 発行します。
+## 呼称のまとめ
 
-```js
-app.get('/link_decorator', (req, res) => {
-  const article = req.query.article
-  const landing_page_url = `https://suumo.jp/chintai/jnc_000060837140/`
-  res.redirect(landing_page_url+`?from=${article}`)
-})
-```
+本 Part では、4 種類の呼称が出てきました。
+簡単におさらいしてみます。
 
-`asp.net` にて、遷移先の `https://suumo.jp/chintai/jnc_000060837140` のリンクに、どこからこのページにやってきたかを示す情報を付与します。
+#### 1st-Party Cookie と 3rd-Party Cookie
 
-今回は、`https://town-blog.net/article/00123` からやってきたという情報をリンク上に付与したいので、`from=townblog00123` というクエリを付与して、`https://suumo.jp/chintai/jnc_000060837140/` へリダイレクトします。
+まず、1st-Party Cookie と 3rd-Party Cookie についてです。
 
-ユーザーの行動を把握するために、リンクに情報を付与することを、一般的にリンクデコレーションと呼びます。
+これらは、訪れているページのドメインに応じて、相対的に決定される呼称です。
 
-#### 2. Client-Side Cookieの発行
+なので、
 
+Cookie が発行されたのが、`Client-Side` か、`Server-Side` かに関わらず、
 
-`https://suumo.jp/chintai/jnc_000060837140?from=townblog00123`に遷移してきました。
+`1st-Party Cookie` と `3rd-Party Cookie` どちらかの呼称は持ちます。
 
-このとき、`from` クエリに保存されている、どのページから遷移してきたかという情報を値に持つ、Server-Side Cookieを発行します。
+ex) Client-Side で発行された 1st-Party Cookie, Server-Side で発行された 1st-Party Cookie 等
 
-```html
+#### Client-Side Cookie と Server-Side Cookie
 
-<script>
-const urlParam = location.search.substring(1);
+訪れているページのドメインに応じて、相対的に決定される `1st-Party Cookie` と `3rd-Party Cookie` に対して、
 
-// URLにパラメータが存在する場合
-if(urlParam) {
-  // 「&」が含まれている場合は「&」で分割
-  const param = urlParam.split('&');
- 
-  // パラメータを格納する用の配列を用意
-  let paramArray = [];
- 
-  // 用意した配列にパラメータを格納
-  for (i = 0; i < param.length; i++) {
-    let paramItem = param[i].split('=');
-    paramArray[paramItem[0]] = paramItem[1];
-  }
-}
+Client-Side Cookie と Server-Side Cookie は 発行方法によって決定する呼称です。
 
-document.cookie = `visit_from=${paramArray.from}`
-</script>
+発行元によって Client-Side Cookie か Server-Side Cookie が決定し、
 
-```
+そのあと訪れたページのドメインに対して、動的に `1st-Party Cookie` と呼ぶか、 `3rd-Party Cookie`と呼ぶかが決定します。
 
-これにより、`suumo.jp` ドメインで、どのサイトから来たかという情報を持つ `visit_from` が発行されました。
+#### Client-Side Cookie × 3rd-Party Cookie は存在しない
 
-この  `visit_from` Cookiehの発行元は、`suumo.jp` ドメイン であるため、`suumo.jp`配下のページであれば、JavaScriptで自由に操作することができます。
+ここで、Cookie には大きく 4 つの組み合わせがあるのではないか??
 
+と考えてみます。
 
-#### 3. Client-Side Cookieの値を取得してASPに送信する
+1. Client-Side Cookie × 1st-Party Cookie
+2. Server-Side Cookie × 1st-Party Cookie
+3. Client-Side Cookie × 3rd-Party Cookie
+4. Server-Side Cookie × 3rd-Party Cookie
 
-この `suumo.jp` ドメインを発行元とする `visit_from` Cookieには、`suumo.jp`配下であればJavaScriptで操作することが可能です。
+しかし、実際には、**3. Client-Side Cookie × 3rd-Party Cookie** のケースの Cookie は存在しません。
 
-ここで、内見予約を完了した際に表示されるページ `https://suumo.jp/chintai/finished_reservation` (仮のURL) 上に、ASP `asp.net` ドメインに対してリクエストを送信するscriptタグを配置します。
+---
+
+Client-Side Cookie は、ページ内の JavaScript `document.cookie` によって生成されます。
+
+その際、発行元のドメイン以外のドメインを指定した場合、Cookie のドメインの設定は暗黙的に無視されます。
+
+_`https://example.com/index.html` 上で、JavaScript により、`tracker.net` ドメインの Cookie を発行しようとした場合_
 
 ```html
-<script>
-
-// cookieを取得して、それをもとにbodyを形成し、requestを送信するscriptを記載 z
-
-</script>
-
+<!DOCTYPE html>
+<html lang="ja">
+  <body>
+    <p>ようこそ example.com へ!</p>
+    <img src="https://tracker.net/test.jpg" />
+  </body>
+  <script>
+    document.cookie = "test=123; domain=tracker.net;";
+  </script>
+</html>
 ```
 
-上記のscript内では、`visit_from` から `suumo` に接続したユーザーが、どのブログを見ていたかという情報: `townblog00123` を取得し、その情報を `asp.net` に送信しています。
+この場合は、Cookie の生成には失敗します。
 
-これにより、`asp.net` は *suumoで内見予約をしたユーザーが、実際にタウンブログを訪れていることを確認する* という要件を達成することができます。
+> ドメインは JavaScript のオリジンと一致している必要があります。外部ドメインへのクッキーの設定は暗黙に無視されます。: https://developer.mozilla.org/ja/docs/Web/API/Document/cookie
 
-#### まとめ
+そのため、実際には **Client-Side Cookie × 3rd-Party Cookie は存在しない** ということになります。
 
-現在の主流は、これまで説明したように、
+## 呼称のまとめ
 
-1. リンクデコレーションによって、URLにブログの回覧履歴を書き込む
-2. 遷移先で、URLに書き込まれたブログの回覧履歴を、Client-Side Cookieとして遷移先のドメインに保存する
-3. Client-Side Cookie が発行されたドメイン上の、ユーザーが訪れたかどうかを計測したいページで、Client-Side Cookieの値を取得し、それを伴ったリクエストを送信する
+_Cookie の発行方法と、ドメインで見る Cookie の呼称について_
 
+| 発行方法/訪れたドメインに対する Cookie の発行元 | 1st-Party                             | 3rd-Party                             |
+| ----------------------------------------------- | ------------------------------------- | ------------------------------------- |
+| Client-Side Cookie                              | Client-Side Cookie × 1st-Party Cookie | 発行できない                          |
+| Server-Side Cookie                              | Server-Side Cookie × 1st-Party Cookie | Server-Side Cookie × 3rd-Party Cookie |
+
+# 最後に
+
+ここまでに
+
+1. Cookie の送信の性質
+2. Cookie の生成方法が 2 パターンあること
+3. Cookie 自体の発行元ドメインと、訪れたサイトによって、Cookie の呼称が変わること
+
+の 3 点についてお話しました。
+
+この Cookie に対する各規制が、 アドテク業界を賑わせて?います。
