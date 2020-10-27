@@ -3,7 +3,7 @@ title: "3rd-party Cookieを巡る環境の変遷"
 date: "2020-09-24"
 presenters: ["富本"]
 audiences: ["谷口", "奥山"]
-draft: true
+draft: false
 ---
 
 # はじめに
