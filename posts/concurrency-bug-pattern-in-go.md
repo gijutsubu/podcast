@@ -6,13 +6,20 @@ audiences: ['奥山', '富本']
 draft: true
 ---
 
-Goでは並行処理の扱いが多言語よりも容易だと感じますが、それでも結構バグは生まれてしまうものです。
+# はじめに
 
-Goの並行処理パターンとともによくある並行処理のバグ、それを回避する等々を見ていきます。
+`Go`では並行処理の扱いが多言語よりも容易だと感じますが、\
+それでも結構バグは生まれてしまうものです。
+
+`Go`の並行処理パターンとともによくある並行処理のバグ、\
+それを回避する方法を見ていきます。
 
 # 単純な並行処理
 
 ### 一番シンプルな並行処理
+
+`go f()` で並行処理を実行できる\
+ただしこれだと別ゴルーチン内の処理の実行が非決定的
 
 ```go
 func main() {
@@ -24,9 +31,9 @@ func main() {
 
 [Play](https://play.golang.org/p/Zh1_9wJCmxf)
 
-### 表示を確定させる(fork-join)
+### 表示を確定させる方法(`fork-join`)
 
-#### WaitGroup
+#### 1. `sync.WaitGroup`
 
 ```go
 func main() {
@@ -43,14 +50,14 @@ func main() {
 
 [Play](https://play.golang.org/p/qi09jZdak3Y)
 
-#### chan
+#### 2. チャネル
 
 ```go
 func main() {
 	ch := make(chan interface{})
 	go func() {
 		defer close(ch)
-		fmt.Println("do somthing")
+		fmt.Println("do somthing") // 表示を確定
 	}()
 	<-ch
 }
@@ -58,7 +65,7 @@ func main() {
 
 [Play](https://play.golang.org/p/Bc1c2pfAE0j)
 
-### よくあるバグ: goキーワード内でAddしてしまう
+### よくあるバグ: `go`キーワード内で`Add`してしまう
 
 ```go
 func main() {
@@ -69,13 +76,13 @@ func main() {
 		defer wg.Done()
 		fmt.Println("do somthing")
 	}()
-	wg.Wait()
+	wg.Wait() // ここに到達する前にAddが呼ばれない可能性がある
 }
 ```
 
 [Play](https://play.golang.org/p/uXG8MjMbStM)
 
-# for文
+# `for`文
 
 ### 逐次実行
 
@@ -100,7 +107,10 @@ func main() {
 
 [Play](https://play.golang.org/p/qwQj-PSEZBb)
 
-### よくあるバグ: ループ変数をそのまま`goroutine`で使用してしまう
+### よくあるバグ: ループ変数をそのままゴルーチンで使用してしまう
+
+ループ内の関数はある瞬間の値でなく、メモリ位置を共有する\
+そのためループの最後の値をすべてのゴルーチンから参照してしまう
 
 ```go
 func main() {
@@ -126,7 +136,9 @@ func main() {
 
 [Play](https://play.golang.org/p/VjTAZg3WvQt)
 
-### 対応: 関数の引数に渡す
+### 関数の引数に渡す
+
+関数の引数に渡してしまえば渡したときの値を参照するので問題ない
 
 ```go
 func main() {
@@ -152,7 +164,9 @@ func main() {
 
 [Play](https://play.golang.org/p/4n8OUQ3SxNU)
 
-### 対応: ループ内で変数をコピーする
+### ループ内で変数をコピーする
+
+コピーした値を参照するので問題ない
 
 ```go
 func main() {
@@ -179,9 +193,12 @@ func main() {
 
 [Play](https://play.golang.org/p/H_p0lKtzVtx)
 
-# エラーチェック
+# エラーハンドリング
 
-### 普通のエラーチェック
+### 逐次処理のエラーハンドリング
+
+`Go`の関数はエラーハンドリングが基本必要になる\
+なので普通の`go f()`だとできない
 
 ```go
 func main() {
@@ -204,7 +221,9 @@ func doSomting() error {
 
 [Play](https://play.golang.org/p/SB2Ye6NK-Jp)
 
-### エラーを返す関数を並行に処理したい
+### 並行処理のエラーハンドリング
+
+チャネルを経由してエラーをハンドリングする
 
 ```go
 func run() error {
@@ -230,7 +249,9 @@ func doSomting() error {
 
 [Play](https://play.golang.org/p/Z6F9W8eA3EV)
 
-### エラーを返す関数をループで並行に処理したい
+### エラーを返す関数をループで並行に処理する
+
+`sync.WaitGroup`とチャネルを併用してエラーをハンドリングする
 
 ```go
 func run() error {
@@ -266,7 +287,9 @@ func doSomting() error {
 
 [Play](https://play.golang.org/p/v3TOqav1_bh)
 
-### エラーも値も返す関数をループで並行に処理したい
+### エラーも値も返す関数をループで並行に処理する
+
+エラーと返却値をまとめた構造体を定義するパターンが多いように感じる
 
 ```go
 type Result struct {
@@ -310,7 +333,15 @@ func doSomting() (int, error) {
 
 [Play](https://play.golang.org/p/qAirEG0f4zM)
 
-### 対応: エラーだけの場合、errgroupを使うと簡潔に書ける
+### `errgroup.Group`
+
+`errgroup.Group`を使うと簡潔に書ける\
+今回は関係ないが`errgroup.Group`を直接使う場合は\
+`cancel`を呼ばないので
+他のゴルーチンは処理を途中でやめられない\
+`errgroup.WithContext`は`cancel`を返却するので\
+`<-ctx.Done`で他のゴルーチンの終了を検知できる
+
 
 ```go
 func run() error {
@@ -335,12 +366,15 @@ func doSomting() error {
 
 # goroutineリーク
 
-### チャネルのバッファに関するバグ
+### よくあるバグ: チャネルのバッファ不足
+
+チャネルにバッファがないため受信されないと送信できない。
+\永遠にブロックしゴルーチンが残り続ける
 
 ```go
 func run() error {
 	timeout := time.Second * 1
-	ch := make(chan int)
+	ch := make(chan int) // バッファ0
 	go func() {
 		result := doSomting()
 		ch <- result // ブロック
@@ -362,12 +396,14 @@ func doSomting() int {
 
 [Play](https://play.golang.org/p/6f4PBbxcF81)
 
-### 対応: バッファを追加する
+### バッファを追加する
+
+チャネルを受信しなくくても送信できるようにバッファを作っておく
 
 ```go
 func run() error {
 	timeout := time.Second * 1
-	ch := make(chan int, 1)
+	ch := make(chan int, 1) // バッファ1
 	go func() {
 		result := doSomting()
 		ch <- result
@@ -389,7 +425,7 @@ func doSomting() int {
 
 [Play](https://play.golang.org/p/K2pyVdROK5u)
 
-### contextを使うとtimmeoutのハンドリングが良い感じ
+### `context.WithTimeout`を使うとタイムアウトのハンドリングが良い感じ
 
 ```go
 func run() error {
@@ -416,11 +452,17 @@ func doSomting() int {
 }
 ```
 
-`cancel`を引き回せば呼び出し先の関数から呼び出し側の関数を終了させることができる
+`cancel`を引き回せば呼び出し先の関数から\
+呼び出し側の関数を終了させることができる
 
 [Play](https://play.golang.org/p/UKp9XD1B4_O)
 
-# selectの挙動
+# `select`の挙動
+
+### よくあるバグ: `select`のランダム性
+
+`select`は同時に条件を満たす`case`があった場合、ランダムに選択される\
+そのため`stopCh`が閉じられていても実行される可能性がある
 
 ```go
 func run() error {
@@ -449,7 +491,10 @@ func doSomting() {
 
 [Play](https://play.golang.org/p/daS7ePxiex8)
 
-### 対応: for の最初でもchannelを見るようにする
+### `for`の最初でもチャネルを見るようにする
+
+`for`の最初でも`stopCh`を見ることで\
+確実に終了を検知する
 
 ```go
 func run() error {
@@ -482,3 +527,49 @@ func doSomting() {
 ```
 
 [Play](https://play.golang.org/p/mQL0toGdOj5)
+
+### 余談: `select`を使用したサイコロ
+
+`select`のランダム性を利用してこんなこともできる\
+`crypt/rand`とか`math/rand`を使わずに作れる
+
+```go
+func dice() int {
+	ch1 := make(chan interface{}); close(ch1)
+	ch2 := make(chan interface{}); close(ch2)
+	ch3 := make(chan interface{}); close(ch3)
+	ch4 := make(chan interface{}); close(ch4)
+	ch5 := make(chan interface{}); close(ch5)
+	ch6 := make(chan interface{}); close(ch6)
+
+	select {
+	case <-ch1: return 1
+	case <-ch2: return 2
+	case <-ch3: return 3
+	case <-ch4: return 4
+	case <-ch5: return 5
+	case <-ch6: return 6
+	}
+}
+```
+
+[Play](https://play.golang.org/p/au82GRZ7x_9)
+
+# おわりに
+
+他にも山ほどあるが、書いていたらきりがないので終わっときます。
+
+
+色々書いていたけど\
+正直、素直なAPI書いてたら、あんまり使う必要がないと思ってます。\
+使っても良いけどやっぱりバグの温床になりやすい気がするなあ。
+
+外部のAPI叩いたり、バッチで処理するときは使うけど。
+
+
+でも書いていて気持ちが良いし、\
+プリミティブな`sync.Mutex`とかもあるので\
+Goの並行処理を書いていて\
+ほとんど困るときはないなあと思います。
+
+あと[The Go Playground](https://play.golang.org/)が便利すぎますね。
