@@ -43,6 +43,7 @@ audiences: ['中村', '橋本']
 
 - `presenters`と`audiences`は省略可能
 - `draft: true`だと公開されない
+  - ただし`npm run dev`で確認する場合は表示される
 
 ## ローカルで確認
 
