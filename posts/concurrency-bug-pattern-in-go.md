@@ -3,7 +3,7 @@ title: 'Goの並行処理のバグについて'
 date: '2020-11-01'
 presenters: ['谷口']
 audiences: ['奥山', '富本']
-draft: true
+draft: false
 ---
 
 # はじめに
